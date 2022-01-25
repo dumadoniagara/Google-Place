@@ -1,14 +1,6 @@
 const initState = {
-    places: [
-        {
-            id: 1,
-            name: 'Bandung'
-        },
-        {
-            id: 2,
-            name: 'Jakarta'
-        },
-    ],
+    places: [],
+    marker: {},
 }
 
 const places = (state = initState, action) => {
@@ -16,11 +8,15 @@ const places = (state = initState, action) => {
         case 'SET_PLACES':
             return {
                 ...state,
-                places: [...state.places, action.places]
+                places: action.places,
+            }
+        case 'SET_MARKER':
+            return {
+                ...state,
+                marker: action.marker,
             }
         default:
             return state;
-
     }
 }
 

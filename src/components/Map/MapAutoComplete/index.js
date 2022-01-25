@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-// import { AutoComplete, Spin } from 'antd';
+import { connect } from 'react-redux';
 import Box from '@mui/material/Box';
 import TextField from '@mui/material/TextField';
 import Autocomplete from '@mui/material/Autocomplete';
@@ -8,28 +8,27 @@ import Grid from '@mui/material/Grid';
 import Typography from '@mui/material/Typography';
 import parse from 'autosuggest-highlight/parse';
 import debounce from 'lodash/debounce';
-
-const KEY_GOOGLE_MAPS = 'AIzaSyDgbAWfq5T1O12EPpZrGSiJv-vM592Nihs';
+import * as actions from '../../../store/actions';
 
 class MapAutoComplete extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            suggestionts: [],
             dataSource: [],
-            singaporeLatLng: this.props.singaporeLatLng,
-            autoCompleteService: this.props.autoCompleteService,
-            geoCoderService: this.props.geoCoderService,
-            markerName: this.props.markerName,
+            markerName: null,
             loading: false
         }
-
         this.handleSearch = debounce(this.handleSearch, 500);
     }
 
     componentDidUpdate(prevProps) {
         if (prevProps.markerName !== this.props.markerName) {
             this.setState({ markerName: this.props.markerName })
+        }
+        if (prevProps.places !== this.props.places) {
+            this.setState({
+                dataSource: this.props.places.places,
+            })
         }
     }
 
@@ -40,38 +39,42 @@ class MapAutoComplete extends Component {
                 const latitude = location && location.lat();
                 const longitude = location && location.lng();
                 this.setState({ markerName: value });
-                this.props.addMarker(latitude, longitude, value);
+                const markerData = {
+                    lat: latitude,
+                    lng: longitude,
+                    name: value,
+                }
+                this.props.setMarker(markerData);
             }
         }))
     });
 
     handleSearchValue = (value) => {
-        this.setState({ markerName: value, dataSource: [], loading: value.length > 4 }, () => this.handleSearch(value))
+        this.setState({ markerName: value, loading: value.length > 2 }, () => this.handleSearch(value));
+        this.props.setPlaces([]);
     }
 
     handleSearch = ((value) => {
-        if (value.length > 4) {
+        if (value.length > 2) {
             const searchQuery = {
                 input: value,
             };
             this.props.autoCompleteService.getQueryPredictions(searchQuery, ((response) => {
                 if (response) {
                     const dataSource = response.map((resp) => resp.description);
-                    this.setState({ dataSource, suggestions: response, loading: false });
+                    this.setState({ loading: false });
+                    this.props.setPlaces(dataSource);
                 }
             }));
         }
     });
 
-    onSelectPlace = () => {
-
-    }
-
     render() {
-        const { dataSource, markerName, loading } = this.state;
+        const { dataSource } = this.state;
         return (
             <Autocomplete
                 id="combo-box-maps"
+                filterOptions={(x) => x}
                 options={dataSource}
                 sx={{ width: '100%' }}
                 renderInput={(params) => <TextField {...params} label="Find Place" />}
@@ -82,4 +85,12 @@ class MapAutoComplete extends Component {
     }
 }
 
-export default MapAutoComplete;
+const mapStateToProps = (state, props) => ({
+    places: state.places,
+});
+
+const mapDispatchToProps = (dispatch, props) => ({
+    setPlaces: (data) => dispatch(actions.setPlaces(data)),
+    setMarker: (data) => dispatch(actions.setMarker(data)),
+});
+export default connect(mapStateToProps, mapDispatchToProps)(MapAutoComplete);

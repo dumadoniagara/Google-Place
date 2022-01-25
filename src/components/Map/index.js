@@ -2,24 +2,38 @@ import React from 'react';
 import { GoogleApiWrapper, Map, InfoWindow, Marker } from 'google-maps-react';
 import Box from '@mui/material/Box';
 import MapAutoComplete from './MapAutoComplete';
+import { connect } from 'react-redux';
+import * as actions from '../../store/actions';
 
 export class MapContainer extends React.Component {
-    state = {
-        showingInfoWindow: true,
-        activeMarker: {},
-        mapsLoaded: true,
-        map: {},
-        mapsApi: {},
-        autoCompleteService: {},
-        placesService: {},
-        geoCoderService: {},
-        markers: {
-            lat: 3.139003,
-            lng: 101.686855,
-            name: "Kuala Lumpur, Federal Territory of Kuala Lumpur, Malaysia",
-        },
-        selectedPlace: {},
-    };
+    constructor(props) {
+        super(props);
+        this.state = {
+            showingInfoWindow: true,
+            activeMarker: {},
+            mapsLoaded: true,
+            map: {},
+            mapsApi: {},
+            autoCompleteService: {},
+            placesService: {},
+            geoCoderService: {},
+            markers: {
+                // initial marker location
+                lat: 3.139003,
+                lng: 101.686855,
+                name: "Kuala Lumpur, Federal Territory of Kuala Lumpur, Malaysia",
+            },
+            selectedPlace: {},
+        };
+    }
+
+    componentDidUpdate(prevProps) {
+        if (prevProps.marker !== this.props.marker) {
+            this.setState({
+                markers: this.props.marker
+            })
+        }
+    }
 
     onMarkerClick = (props, marker, e) =>
         this.setState({
@@ -47,13 +61,7 @@ export class MapContainer extends React.Component {
             placesService: new google.maps.places.PlacesService(map),
             geoCoderService: new google.maps.Geocoder(),
         });
-
     }
-
-    addMarker = (lat, lng, name) => {
-        const markers = { lat, lng, name }
-        this.setState({ markers });
-    };
 
     render() {
         const { autoCompleteService, geoCoderService, markers } = this.state;
@@ -79,7 +87,6 @@ export class MapContainer extends React.Component {
                         {markers !== null &&
                             <Marker
                                 onClick={this.onMarkerClick}
-                                name={'Current location'}
                                 position={{ lat: markers.lat, lng: markers.lng }}
                                 name={markers.name}
                             />
@@ -97,6 +104,16 @@ export class MapContainer extends React.Component {
         )
     }
 }
+
+const mapStateToProps = (state, props) => ({
+    places: state.places.places,
+    marker: state.places.marker,
+});
+
+const mapDispatchToProps = (dispatch, props) => ({
+    setPlaces: (data) => dispatch(actions.setPlaces(data)),
+});
+
 export default GoogleApiWrapper({
     apiKey: ('AIzaSyDgbAWfq5T1O12EPpZrGSiJv-vM592Nihs')
-})(MapContainer)
+})(connect(mapStateToProps, mapDispatchToProps)(MapContainer))
