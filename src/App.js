@@ -1,23 +1,24 @@
-import logo from './logo.svg';
 import './App.css';
+import { useState, useEffect } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
+import * as placeActions from '../src/actions/place';
+import Container from '@mui/material/Container';
+import MapAutoComplete from './components/Map/MapAutoComplete';
+import Map from '../src/components/Map';
 
-function App() {
+const App = (props) => {
+  const places = useSelector(state => state.places);
+  const dispatch = useDispatch();
+  useEffect(() => {
+    dispatch(placeActions.setPlaces());
+  }, [])
+
   return (
     <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+      <Container maxWidth="md">
+        <h2>Place Autocomplete</h2>
+        <Map />
+      </Container>
     </div>
   );
 }
