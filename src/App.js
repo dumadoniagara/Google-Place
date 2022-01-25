@@ -1,14 +1,10 @@
 import './App.css';
-import Container from '@mui/material/Container';
-import Map from '../src/components/Map';
+import MapContainer from './container/MapContainer';
 
 const App = (props) => {
   return (
     <div className="App">
-      <Container maxWidth="md">
-        <h2>Place Autocomplete</h2>
-        <Map />
-      </Container>
+      <MapContainer />
     </div>
   );
 }

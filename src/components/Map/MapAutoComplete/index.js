@@ -33,7 +33,8 @@ class MapAutoComplete extends Component {
     }
 
     onSelect = ((value) => {
-        this.props.geoCoderService.geocode({ address: value }, ((response) => {
+        const description = value && value.description;
+        this.props.geoCoderService.geocode({ address: description }, ((response) => {
             if (response && response[0] && response[0].geometry) {
                 const { location } = response[0].geometry;
                 const latitude = location && location.lat();
@@ -61,7 +62,7 @@ class MapAutoComplete extends Component {
             };
             this.props.autoCompleteService.getQueryPredictions(searchQuery, ((response) => {
                 if (response) {
-                    const dataSource = response.map((resp) => resp.description);
+                    const dataSource = response;
                     this.setState({ loading: false });
                     this.props.setPlaces(dataSource);
                 }
@@ -72,15 +73,56 @@ class MapAutoComplete extends Component {
     render() {
         const { dataSource } = this.state;
         return (
-            <Autocomplete
-                id="combo-box-maps"
-                filterOptions={(x) => x}
-                options={dataSource}
-                sx={{ width: '100%' }}
-                renderInput={(params) => <TextField {...params} label="Find Place" />}
-                onChange={(event, newValue) => { this.onSelect(newValue) }}
-                onInputChange={(event, newInputValue) => this.handleSearch(newInputValue)}
-            />
+            <div className='autocomplete-wrapper'>
+                <Autocomplete
+                    id="combo-box-maps"
+                    className="autocomplete"
+                    filterOptions={(x) => x}
+                    options={dataSource}
+                    getOptionLabel={(option) =>
+                        typeof option === 'string' ? option : option.description
+                    }
+                    sx={{ width: '100%' }}
+                    renderInput={(params) => <TextField autoFocus {...params} label="Find Place" />}
+                    onChange={(event, newValue) => { this.onSelect(newValue) }}
+                    onInputChange={(event, newInputValue) => this.handleSearch(newInputValue)}
+                    renderOption={(props, option) => {
+                        const matches = option.structured_formatting.main_text_matched_substrings;
+                        const parts = parse(
+                            option.structured_formatting.main_text,
+                            matches.map((match) => [match.offset, match.offset + match.length]),
+                        );
+                        return (
+                            <li {...props}>
+                                <Grid container alignItems="center">
+                                    <Grid item>
+                                        <Box
+                                            component={LocationOnIcon}
+                                            sx={{ color: 'text.secondary', mr: 2 }}
+                                        />
+                                    </Grid>
+                                    <Grid item xs>
+                                        {parts.map((part, index) => (
+                                            <span
+                                                key={index}
+                                                style={{
+                                                    fontWeight: part.highlight ? 700 : 400,
+                                                }}
+                                            >
+                                                {part.text}
+                                            </span>
+                                        ))}
+
+                                        <Typography variant="body2" color="text.secondary">
+                                            {option.structured_formatting.secondary_text}
+                                        </Typography>
+                                    </Grid>
+                                </Grid>
+                            </li>
+                        );
+                    }}
+                />
+            </div>
         );
     }
 }
